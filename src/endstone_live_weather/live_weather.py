@@ -1,4 +1,5 @@
-import datetime, pytz, urllib.request
+import datetime
+import urllib.request
 
 from endstone.plugin import Plugin
 
@@ -10,15 +11,32 @@ class LiveWeather(Plugin):
         self.server.scheduler.run_task(self, self.sync_weather, 0, 5000)
 
     def sync_weather(self) -> None:
-        self.server.dispatch_command(self.server.command_sender, f"weather {self.get_weather_vienna()} 5000")
-        self.server.dispatch_command(self.server.command_sender, f"time set {self.get_vienna_ticks()}")
+        try:
+            weather_mode = self.get_weather_vienna()
+        except Exception as e:
+            self.logger.warning(f"{e}")
+            return
+
+        try:
+            self.server.dispatch_command(self.server.command_sender, f"weather {weather_mode} 5000")
+        except Exception as e:
+            self.logger.warning(f"{e}")
+
+        try:
+            ticks = self.get_time()
+            self.server.dispatch_command(self.server.command_sender, f"time set {ticks}")
+        except Exception as e:
+            self.logger.warning(f"{e}")
 
     @staticmethod
-    def get_weather_vienna():
+    def get_weather_vienna() -> str:
         url = "https://wttr.in/Vienna?format=%C&lang=en"
 
-        with urllib.request.urlopen(url, timeout=5) as r:
-            condition = r.read().decode().strip().lower()
+        try:
+            with urllib.request.urlopen(url, timeout=3) as r:
+                condition = r.read().decode().strip().lower()
+        except Exception as e:
+            raise RuntimeError(f"wttr.in request failed: {e}") from e
 
         if "thunder" in condition or "storm" in condition:
             return "thunder"
@@ -28,7 +46,7 @@ class LiveWeather(Plugin):
             return "clear"
 
     @staticmethod
-    def get_vienna_ticks() -> int:
-        now = datetime.datetime.now(pytz.timezone("Europe/Vienna"))
+    def get_time() -> int:
+        now = datetime.datetime.now()
         seconds = now.hour * 3600 + now.minute * 60 + now.second
         return int((seconds / 86400) * 24000) % 24000
