@@ -1,0 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "endstone-live-weather"
+version = "1.0.0"
+description = ""
+
+[project.entry-points."endstone"]
+live-weather = "endstone_live_weather:LiveWeather"
