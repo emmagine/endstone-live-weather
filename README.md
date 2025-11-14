@@ -1,4 +1,4 @@
-# Example Live Weather for Endstone
+# Example Live Weather for EndstoneMC
 
 A lightweight plugin for **Endstone** that turns your Minecraft world into a live weather mirror of a city or region in
 the real world.
